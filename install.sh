@@ -10,10 +10,10 @@ function prop {
     grep "${1}" ${file} | cut -d'=' -f2
 }
 
-  sid = ${prop 'sid'}
-  instance = ${prop 'instance'}
-  hana_url = ${prop 'hana_url'}
-  sapcar_url = ${prop 'sapcar_url'}
+  sid=$(prop 'sid')
+  instance=$(prop 'instance')
+  hana_url=$(prop 'hana_url')
+  sapcar_url=$(prop 'sapcar_url')
 
   echo $sid
   echo $instance
@@ -86,4 +86,3 @@ sudo -i -u $sidadm hdbuserstore set SYSTEM 127.0.0.1:$master_port SYSTEM manager
 rm -rf /build/data/*
 
 exit 0
-
