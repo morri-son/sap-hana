@@ -60,7 +60,6 @@ timeout -k 2 3600 ./hdblcm \
   -password Init1234 \
   -system_user_password manager \
   --hdbinst_server_ignore=check_min_mem,check_platform,check_diskspace \
-  --custom_cfg=/build/scripts/custom_config \
   --ignore=check_signature_file \
   $additional_parameters
 
