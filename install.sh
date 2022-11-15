@@ -2,57 +2,32 @@
 
 set -e
 
-if [ $# -eq 0 ]; then
+sid=AWS
 
-file="./parameters.conf"
-
-function prop {
-    grep "${1}" ${file} | cut -d'=' -f2
-}
-
-  sid=$(prop 'sid')
-  instance=$(prop 'instance')
-  hana_url=$(prop 'hana_url')
-  sapcar_url=$(prop 'sapcar_url')
-
-  echo $sid
-  echo $instance
-  echo $hana_url
-  echo $sapcar_url
-else
-  sid = $1
-  instance = $2
-  hana_url = $3
-  sapcar_url = $4
-fi
-
-echo 
-zypper --non-interactive refresh
-zypper --non-interactive install curl vim libaio libnuma1 libltdl7 libatomic1 syslog hwinfo sudo tar psmisc wget insserv-compat
-zypper clean
+# zypper --non-interactive refresh
+# zypper --non-interactive install libaio libnuma1 libltdl7 libatomic1 syslog hwinfo sudo psmisc insserv-compat
+# zypper clean
 
 mkdir -p /usr/sap
-mkdir /install
 
 cd /install
+chmod a+x SAPCAR
 
-curl -sSf -o hana.sar "$hana_url"
-curl -sSf -o sapcar "$sapcar_url"
-chmod a+x sapcar
-./sapcar -xvf hana.sar
-rm -f hana.sar
+cd /install/rev64
+/install/SAPCAR -xvf SAP_HANA_DATABASE200_64_Linux_on_x86_64.SAR
+rm SAP_HANA_DATABASE200_64_Linux_on_x86_64.SAR
 
 hana_dir=SAP_HANA_DATABASE
 cd "$hana_dir"
 
-master_port=3"$instance"13
+master_port=30013
 
 timeout -k 2 3600 ./hdblcm \
   --batch \
   --action=install \
   --components=server \
-  --sid "$sid" \
-  --number="$instance" \
+  --sid AWS \
+  --number=00 \
   --sapmnt=/hana/shared \
   --datapath=/hana/data \
   --logpath=/hana/log \
@@ -60,8 +35,7 @@ timeout -k 2 3600 ./hdblcm \
   -password Init1234 \
   -system_user_password manager \
   --hdbinst_server_ignore=check_min_mem,check_platform,check_diskspace \
-  --ignore=check_signature_file \
-  $additional_parameters
+  --ignore=check_signature_file
 
 cat > /root/passwords.xml <<-END
 <?xml version="1.0" encoding="UTF-8"?>
@@ -74,14 +48,5 @@ END
 sidadm=$(echo $sid| tr '[:upper:]' '[:lower:]')adm
 
 sudo -i -u $sidadm hdbuserstore set SYSTEM 127.0.0.1:$master_port SYSTEM manager
-
-# cp /build/files/init.sh /init.sh
-# chmod 755 /init.sh
-
-# sed -i s/__SID__/$sid/g /init.sh
-# sed -i s/__INSTANCE__/$instance/g /init.sh
-# sed -i s/__SIDADM__/$sidadm/g /init.sh
-
-rm -rf /build/data/*
 
 exit 0
